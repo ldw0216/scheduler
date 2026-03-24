@@ -18,29 +18,28 @@
         .mini-progress-wrapper { background: #eee; height: 6px; border-radius: 3px; margin: 8px auto 0; width: 80%; overflow: hidden; }
         .mini-progress-fill { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 0%; transition: width 0.5s ease; }
 
-        /* 탭 메뉴 */
+        /* 탭 및 프리셋 */
         .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); }
         .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #7f8c8d; }
         .tab-btn.active { color: var(--main-color); border-bottom: 3px solid var(--main-color); }
-        .content-section { display: none; }
-        .content-section.active { display: block; }
+        .preset-section { background: #fdfdfd; border: 1px dashed var(--main-color); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+        .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+        .preset-card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 10px; text-align: center; position: relative; }
 
-        /* 과제 카드 */
+        /* 과제 리스트 */
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .subject-card { border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; background: #fff; }
         .task-row { margin-bottom: 10px; padding: 10px; background: #fafafa; border-radius: 8px; border-left: 4px solid var(--main-color); }
         .task-row.urgent { border-left-color: var(--danger-color); background: #fff5f5; }
-        .d-day-badge { font-size: 0.7em; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .d-day-badge { font-size: 0.65em; font-weight: bold; padding: 2px 5px; border-radius: 4px; min-width: 40px; text-align: center; display: inline-block; }
 
         /* 달력 */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #eee; border-left: 1px solid #eee; }
-        .calendar-day { min-height: 100px; padding: 5px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.8em; position: relative; cursor: pointer; }
-        .calendar-day:hover { background-color: #f8f9fa; }
-        .event-bar { font-size: 0.75em; padding: 3px 5px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; position: relative; }
+        .calendar-day { min-height: 100px; padding: 5px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.8em; cursor: pointer; }
+        .event-bar { font-size: 0.75em; padding: 3px 5px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; white-space: nowrap; position: relative; }
         .event-task { background-color: var(--main-color); }
         .event-personal { background-color: var(--personal-color); cursor: pointer; }
         .event-personal:hover { filter: brightness(1.1); }
-        .event-multi { border-radius: 0; margin-left: -5px; margin-right: -5px; }
     </style>
 </head>
 <body>
@@ -66,16 +65,22 @@
     </div>
 
     <div id="list-section" class="content-section active">
-        <div id="preset-container" class="preset-grid"></div>
-        <div style="margin: 20px 0; display:flex; gap:5px;">
-            <input type="text" id="direct-sub-input" placeholder="새 과목 명 추가" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
-            <button onclick="addSubjectDirect()" style="background:var(--main-color); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">과목 추가</button>
+        <div class="preset-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>📂 과목 프리셋</strong>
+                <button onclick="addPresetSlot()" style="background:var(--long-color); color:white; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-size:0.8em;">+ 슬롯 추가</button>
+            </div>
+            <div class="preset-grid" id="preset-container"></div>
+            <div style="margin-top: 15px; display:flex; gap:5px;">
+                <input type="text" id="direct-sub-input" placeholder="새 과목 바로 추가" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                <button onclick="addSubjectDirect()" style="background:var(--main-color); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">과목 추가</button>
+            </div>
         </div>
         <div class="grid-layout" id="subject-container"></div>
     </div>
 
     <div id="cal-section" class="content-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer; font-size:1.2em;">◀</button>
             <h2 id="current-month-display" style="margin:0; font-size: 1.1em;"></h2>
             <button onclick="changeMonth(1)" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
@@ -104,6 +109,7 @@
         cloudData = data.assignments || {};
         subjectList = data.subjectList || {};
         presets = data.presets || {};
+        renderPresetUI();
         renderSubjects();
         updateWidgets();
         if(document.getElementById('cal-section').classList.contains('active')) renderCalendar();
@@ -114,6 +120,31 @@
         document.getElementById(type + '-section').classList.add('active');
         document.getElementById('tab-' + type).classList.add('active');
         if(type === 'cal') renderCalendar();
+    }
+
+    /* 프리셋 UI (요청대로 유지) */
+    function renderPresetUI() {
+        const container = document.getElementById('preset-container');
+        container.innerHTML = '';
+        Object.entries(presets).forEach(([pid, pData]) => {
+            const card = document.createElement('div'); card.className = 'preset-card';
+            card.innerHTML = `<button onclick="db.ref('presets/${pid}').remove()" style="position:absolute; top:2px; right:2px; border:none; background:none; cursor:pointer; color:#ccc; font-size:10px;">✕</button>
+                <input type="text" value="${pData.name}" style="width:80%; border:none; text-align:center; font-size:0.85em; margin-bottom:5px;" onchange="db.ref('presets/${pid}/name').set(this.value)">
+                <div style="display:flex; gap:3px; justify-content:center;">
+                    <button onclick="saveToPreset('${pid}')" style="background:var(--success-color); color:white; border:none; font-size:9px; padding:3px 5px; border-radius:3px;">저장</button>
+                    <button onclick="loadFromPreset('${pid}')" style="background:var(--main-color); color:white; border:none; font-size:9px; padding:3px 5px; border-radius:3px;">불러오기</button>
+                </div>`;
+            container.appendChild(card);
+        });
+    }
+    function addPresetSlot() { db.ref('presets/p' + Date.now()).set({ name: "새 프리셋", subjects: [] }); }
+    function saveToPreset(pid) { db.ref(`presets/${pid}/subjects`).set(Object.values(subjectList)); alert("현재 과목 구성이 저장되었습니다."); }
+    function loadFromPreset(pid) {
+        if(confirm("기존 과목이 삭제되고 프리셋을 불러옵니다. 진행할까요?")) {
+            const subs = presets[pid].subjects || [];
+            db.ref("subjectList").remove(); db.ref("assignments").remove();
+            subs.forEach((name, i) => db.ref("subjectList/sub" + (Date.now() + i)).set(name));
+        }
     }
 
     function renderSubjects() {
@@ -132,21 +163,25 @@
                 const dDay = getDDay(t.date_end || t.date);
                 const isUrgent = dDay !== null && dDay <= 5 && !t.checked;
                 
-                let dDayText = "";
+                // [변경] 마감일 텍스트 생성
+                let dDayBadge = "";
                 if (dDay !== null && !t.checked) {
-                    if (dDay === 0) dDayText = `<span class="d-day-badge" style="background:var(--danger-color); color:white;">D-Day</span>`;
-                    else if (dDay < 0) dDayText = `<span class="d-day-badge" style="background:#000; color:white;">기한 지남</span>`;
-                    else dDayText = `<span class="d-day-badge" style="background:${isUrgent ? 'var(--danger-color)' : '#95a5a6'}; color:white;">D-${dDay}</span>`;
+                    let color = "#95a5a6", text = `D-${dDay}`;
+                    if (dDay === 0) { color = "var(--danger-color)"; text = "D-Day"; }
+                    else if (dDay < 0) { color = "#000"; text = "종료"; }
+                    else if (isUrgent) { color = "var(--danger-color)"; }
+                    dDayBadge = `<span class="d-day-badge" style="background:${color}; color:white; margin-right:8px;">${text}</span>`;
                 }
 
                 const row = document.createElement('div'); row.className = `task-row ${isUrgent ? 'urgent' : ''}`;
-                row.innerHTML = `<div style="display:flex; align-items:center; gap:8px;">
-                    <input type="checkbox" ${t.checked ? 'checked' : ''} onchange="db.ref('assignments/${id}/checked').set(this.checked)">
+                row.innerHTML = `<div style="display:flex; align-items:center;">
+                    <input type="checkbox" ${t.checked ? 'checked' : ''} onchange="db.ref('assignments/${id}/checked').set(this.checked)" style="margin-right:10px;">
+                    ${dDayBadge}
                     <input type="text" value="${t.text}" style="flex:1; border:none; outline:none; font-weight:bold; background:transparent;" onchange="db.ref('assignments/${id}/text').set(this.value)">
-                    ${dDayText}
-                    <button onclick="db.ref('assignments/${id}').remove()" style="border:none; background:none; cursor:pointer; color:#ddd;">✕</button>
-                </div><div style="display:flex; gap:5px; margin-top:5px;">
+                    <button onclick="db.ref('assignments/${id}').remove()" style="border:none; background:none; cursor:pointer; color:#ddd; font-size:12px;">✕</button>
+                </div><div style="display:flex; gap:5px; margin-top:8px;">
                     <input type="date" value="${t.date || ''}" style="width:45%; border:none; font-size:0.75em; color:#888;" onchange="db.ref('assignments/${id}/date').set(this.value)">
+                    <span style="color:#eee; font-size:10px;">~</span>
                     <input type="date" value="${t.date_end || ''}" style="width:45%; border:none; font-size:0.75em; color:#888;" onchange="db.ref('assignments/${id}/date_end').set(this.value)">
                 </div>`;
                 document.getElementById(`tasks-${subId}`).appendChild(row);
@@ -192,16 +227,15 @@
                     if (dateObj >= start && dateObj <= end && t.text) {
                         const bar = document.createElement('div');
                         const isPersonal = t.type === 'personal';
-                        bar.className = `event-bar ${start.getTime() !== end.getTime() ? 'event-multi' : ''} ${isPersonal ? 'event-personal' : 'event-task'}`;
+                        bar.className = `event-bar ${isPersonal ? 'event-personal' : 'event-task'}`;
                         if(t.checked) bar.style.opacity = "0.3";
                         
-                        if (dateObj.getTime() === start.getTime() || d === 1) bar.innerText = (isPersonal ? '📌 ' : '📝 ') + t.text;
-                        else bar.innerHTML = '&nbsp;';
+                        bar.innerText = (isPersonal ? '📌 ' : '📝 ') + t.text;
 
-                        // [추가] 개인 일정 삭제 버튼 기능 (일정 바 클릭 시 삭제)
+                        // [추가] 개인 일정 클릭 시 삭제 기능
                         if(isPersonal) {
                             bar.onclick = (e) => {
-                                e.stopPropagation();
+                                e.stopPropagation(); // 부모 클릭(일정 추가) 방지
                                 if(confirm(`'${t.text}' 일정을 삭제할까요?`)) db.ref(`assignments/${id}`).remove();
                             };
                         }
