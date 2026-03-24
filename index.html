@@ -36,7 +36,7 @@
         .content-section { display: none; }
         .content-section.active { display: block; }
 
-        .preset-section { background: #fdfefe; border: 1px solid #e1e8ed; padding: 12px; border-radius: 15px; margin-bottom: 20px; }
+        .preset-section { background: #fdfefe; border: 1px solid #e1e8ed; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
         .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 15px; }
         .preset-card { background: #f8f9fa; border: 1px solid #ddd; padding: 15px 10px; border-radius: 12px; text-align: center; position: relative; }
         .preset-name-input { width: 85%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; margin-bottom: 8px; font-size: 0.8em; text-align: center; font-weight: bold; }
@@ -97,19 +97,27 @@
     </div>
 
     <div id="list-section" class="content-section active">
-        <div class="preset-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 15px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <strong style="font-size: 0.9em; color: #566573; white-space: nowrap;">✨ 과목 프리셋</strong>
-                    <button onclick="addPresetSlot()" style="background: #6c5ce7; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">+ 슬롯 추가</button>
+        <div class="preset-section" style="background: #ffffff; border: 2px solid #3498db; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15); padding: 15px;">
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; background: #f0f7ff; padding: 10px; border-radius: 10px; border: 1px solid #d0e3ff;">
+                    <strong style="font-size: 0.9em; color: #2980b9; white-space: nowrap;">✨ 과목 프리셋</strong>
+                    <button onclick="addPresetSlot()" style="background: #6c5ce7; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: bold; box-shadow: 0 2px 6px rgba(108, 92, 231, 0.3); white-space: nowrap;">
+                        + 슬롯 추가
+                    </button>
                 </div>
-                <div style="display: flex; gap: 5px; flex: 1;">
-                    <input type="text" id="direct-sub-input" placeholder="새로운 과목 명을 입력하세요" style="flex: 1; padding:8px; border:1px solid #ddd; border-radius:5px; font-size: 0.85em;">
-                    <button onclick="addSubjectDirect()" style="background:var(--main-color); color:white; border:none; padding:5px 20px; border-radius:5px; cursor:pointer; font-weight:bold; font-size: 0.85em;">추가</button>
+
+                <div style="display: flex; gap: 5px; background: #fff; padding: 5px; border-radius: 10px; border: 2px solid #3498db;">
+                    <input type="text" id="direct-sub-input" placeholder="새 과목 명 입력" style="flex: 1; min-width: 0; padding: 10px; border: none; font-size: 0.9em; outline: none; background: transparent;">
+                    <button onclick="addSubjectDirect()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 7px; cursor: pointer; font-weight: bold; font-size: 0.9em; white-space: nowrap;">
+                        추가
+                    </button>
                 </div>
+
             </div>
-            <div class="preset-grid" id="preset-container"></div>
+            <div class="preset-grid" id="preset-container" style="margin-top: 15px;"></div>
         </div>
+        
         <div class="grid-layout" id="subject-container"></div>
     </div>
 
@@ -139,7 +147,6 @@
 </div>
 
 <script>
-    // 서비스 워커 등록 (PWA의 핵심)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
