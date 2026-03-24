@@ -11,12 +11,14 @@
         body { font-family: 'Pretendard', sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: #2c3e50; padding-bottom: 100px; }
         .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
         
-        /* 대시보드 및 게이지바 */
+        /* 대시보드 및 내장 게이지바 */
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
-        .widget-card { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 12px; text-align: center; }
-        .widget-value { font-size: 1.2em; font-weight: bold; color: var(--main-color); }
-        .progress-wrapper { grid-column: span 3; background: #eee; height: 10px; border-radius: 5px; margin-top: 10px; overflow: hidden; }
-        .progress-fill { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 0%; transition: width 0.5s ease; }
+        .widget-card { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 12px; text-align: center; position: relative; overflow: hidden; }
+        .widget-value { font-size: 1.2em; font-weight: bold; color: var(--main-color); position: relative; z-index: 2; }
+        .widget-card h4 { margin: 5px 0; font-size: 0.9em; position: relative; z-index: 2; }
+        
+        /* 이행률 박스 전용 내부 게이지 */
+        .progress-bg { position: absolute; bottom: 0; left: 0; height: 100%; width: 0%; background: rgba(46, 204, 113, 0.15); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; border-right: 2px solid var(--success-color); }
 
         /* 탭 메뉴 */
         .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); }
@@ -25,26 +27,19 @@
         .content-section { display: none; }
         .content-section.active { display: block; }
 
-        /* 프리셋 섹션 */
-        .preset-section { background: #ffffff; border: 2px solid #3498db; padding: 15px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1); }
-        .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 15px; }
-        .preset-card { background: #f8f9fa; border: 1px solid #ddd; padding: 15px 10px; border-radius: 12px; text-align: center; position: relative; }
-        .preset-name-input { width: 80%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; margin-bottom: 8px; text-align: center; font-size: 0.85em; }
-        .btn-preset-del { position: absolute; top: -8px; right: -8px; background: var(--danger-color); color: white; border: 2px solid white; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-
-        /* 과제 카드 및 D-Day */
+        /* 과제 리스트 스타일 */
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .subject-card { border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; background: #fff; }
         .task-row { margin-bottom: 10px; padding: 10px; background: #fafafa; border-radius: 8px; border-left: 4px solid var(--main-color); }
         .task-row.urgent { border-left-color: var(--danger-color); background: #fff5f5; }
-        .d-day-badge { font-size: 0.7em; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .d-day-badge { font-size: 0.7em; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 5px; color: white; }
 
-        /* 달력 */
+        /* 달력 스타일 (기간제 대응) */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #eee; border-left: 1px solid #eee; }
-        .calendar-day { min-height: 100px; padding: 5px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.8em; position: relative; }
+        .calendar-day { min-height: 100px; padding: 5px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.8em; }
         .event-bar { font-size: 0.75em; padding: 3px 5px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .event-task { background-color: var(--main-color); }
-        .event-multi { background-color: var(--long-color); border-radius: 0; margin-left: -5px; margin-right: -5px; }
+        .event-multi { background-color: var(--long-color); border-radius: 0; margin-left: -6px; margin-right: -6px; }
     </style>
 </head>
 <body>
@@ -55,10 +50,13 @@
     </header>
 
     <div class="dashboard">
-        <div class="widget-card"><h4>이행률</h4><div class="widget-value" id="progress-text">0%</div></div>
+        <div class="widget-card" id="progress-widget">
+            <div id="progress-fill-bg" class="progress-bg"></div>
+            <h4>이행률</h4>
+            <div class="widget-value" id="progress-text">0%</div>
+        </div>
         <div class="widget-card"><h4>오늘 마감</h4><div class="widget-value" id="today-count" style="color:var(--danger-color)">0</div></div>
         <div class="widget-card"><h4>남은 과제</h4><div class="widget-value" id="remaining-count">0</div></div>
-        <div class="progress-wrapper"><div id="progress-bar" class="progress-fill"></div></div>
     </div>
 
     <div class="tabs">
@@ -67,18 +65,7 @@
     </div>
 
     <div id="list-section" class="content-section active">
-        <div class="preset-section">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="color: #2980b9;">✨ 과목 프리셋 설정</strong>
-                <button onclick="addPresetSlot()" style="background: #6c5ce7; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">+ 슬롯 추가</button>
-            </div>
-            <div style="margin-top:15px; display:flex; gap:5px;">
-                <input type="text" id="direct-sub-input" placeholder="새 과목 명 바로 추가" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px; outline:none;">
-                <button onclick="addSubjectDirect()" style="background:var(--main-color); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">과목 추가</button>
-            </div>
-            <div class="preset-grid" id="preset-container"></div>
-        </div>
-        <div class="grid-layout" id="subject-container"></div>
+        <div id="subject-container" class="grid-layout"></div>
     </div>
 
     <div id="cal-section" class="content-section">
@@ -104,15 +91,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let cloudData = {}, subjectList = {}, presets = {}, currentDate = new Date();
+    let cloudData = {}, subjectList = {}, currentDate = new Date();
 
     db.ref().on("value", (snapshot) => {
         const data = snapshot.val() || {};
         cloudData = data.assignments || {};
-        subjectList = data.subjectList || {};
-        presets = data.presets || {};
-
-        renderPresetUI();
+        subjectList = data.subjectList || { "sub1": "기본 과목" };
         renderSubjects();
         updateWidgets();
         if(document.getElementById('cal-section').classList.contains('active')) renderCalendar();
@@ -125,43 +109,6 @@
         if(type === 'cal') renderCalendar();
     }
 
-    // --- 프리셋 UI 유지 ---
-    function renderPresetUI() {
-        const container = document.getElementById('preset-container');
-        if(!container) return;
-        container.innerHTML = '';
-        Object.entries(presets).forEach(([pid, pData]) => {
-            const card = document.createElement('div');
-            card.className = 'preset-card';
-            card.innerHTML = `
-                <button class="btn-preset-del" onclick="deletePresetSlot('${pid}')">✕</button>
-                <input type="text" class="preset-name-input" value="${pData.name}" onchange="db.ref('presets/${pid}/name').set(this.value)">
-                <div style="display:flex; justify-content:center; gap:4px;">
-                    <button onclick="saveToPreset('${pid}')" style="background:var(--success-color); color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">저장</button>
-                    <button onclick="loadFromPreset('${pid}')" style="background:#6c5ce7; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">불러오기</button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function addPresetSlot() { db.ref('presets/p' + Date.now()).set({ name: "새 프리셋", subjects: [] }); }
-    function deletePresetSlot(pid) { if(confirm("이 프리셋 슬롯을 삭제할까요?")) db.ref('presets/' + pid).remove(); }
-    function saveToPreset(pid) {
-        const names = Object.values(subjectList);
-        if(names.length === 0) return alert("저장할 과목이 없습니다.");
-        db.ref(`presets/${pid}/subjects`).set(names);
-    }
-    function loadFromPreset(pid) {
-        const pData = presets[pid];
-        if(!pData.subjects) return alert("저장된 데이터가 없습니다.");
-        if(confirm(`'${pData.name}' 프리셋을 불러올까요?`)) {
-            db.ref("subjectList").remove(); db.ref("assignments").remove();
-            pData.subjects.forEach((name, idx) => db.ref("subjectList/sub" + (Date.now() + idx)).set(name));
-        }
-    }
-
-    // --- 과제 관리 및 기간제 로직 ---
     function renderSubjects() {
         const container = document.getElementById('subject-container');
         container.innerHTML = '';
@@ -181,7 +128,7 @@
             const taskIds = Object.keys(cloudData).filter(id => id.startsWith(subId)).sort();
             taskIds.forEach(id => {
                 const t = cloudData[id];
-                const dDay = getDDay(t.date_end || t.date);
+                const dDay = calculateDDay(t.endDate || t.startDate);
                 const isUrgent = dDay !== null && dDay <= 5 && !t.checked;
 
                 const row = document.createElement('div');
@@ -190,12 +137,12 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         <input type="checkbox" ${t.checked ? 'checked' : ''} onchange="db.ref('assignments/${id}/checked').set(this.checked)">
                         <input type="text" value="${t.text}" style="flex:1; border:none; outline:none; font-weight:bold; background:transparent;" onchange="db.ref('assignments/${id}/text').set(this.value)">
-                        ${dDay !== null && !t.checked ? `<span class="d-day-badge" style="background:${isUrgent ? '#e74c3c' : '#95a5a6'}; color:white;">D-${dDay === 0 ? 'Day' : dDay}</span>` : ''}
+                        ${dDay !== null && !t.checked ? `<span class="d-day-badge" style="background:${isUrgent ? '#e74c3c' : '#95a5a6'}">D-${dDay === 0 ? 'Day' : dDay}</span>` : ''}
                     </div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
-                        <input type="date" value="${t.date || ''}" style="width:45%; border:none; font-size:0.75em; color:#888;" onchange="db.ref('assignments/${id}/date').set(this.value)">
+                        <input type="date" value="${t.startDate || ''}" style="width:46%; border:none; font-size:0.75em; color:#888; background:transparent;" onchange="db.ref('assignments/${id}/startDate').set(this.value)">
                         <span style="font-size:0.7em; color:#ccc;">~</span>
-                        <input type="date" value="${t.date_end || ''}" style="width:45%; border:none; font-size:0.75em; color:#888;" onchange="db.ref('assignments/${id}/date_end').set(this.value)">
+                        <input type="date" value="${t.endDate || ''}" style="width:46%; border:none; font-size:0.75em; color:#888; background:transparent;" onchange="db.ref('assignments/${id}/endDate').set(this.value)">
                     </div>
                 `;
                 document.getElementById(`tasks-${subId}`).appendChild(row);
@@ -203,20 +150,14 @@
         });
     }
 
-    function getDDay(targetDate) {
-        if(!targetDate) return null;
-        const diff = new Date(targetDate) - new Date().setHours(0,0,0,0);
+    function calculateDDay(target) {
+        if(!target) return null;
+        const diff = new Date(target) - new Date().setHours(0,0,0,0);
         const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
         return days < 0 ? null : days;
     }
 
-    function addTask(subId) { db.ref("assignments/" + subId + 't' + Date.now()).set({text: "새 과제", date: "", date_end: "", checked: false}); }
-    function addSubjectDirect() {
-        const input = document.getElementById('direct-sub-input');
-        if(!input.value) return;
-        db.ref("subjectList/sub" + Date.now()).set(input.value);
-        input.value = '';
-    }
+    function addTask(subId) { db.ref("assignments/" + subId + 't' + Date.now()).set({text: "새 과제", startDate: "", endDate: "", checked: false}); }
 
     function renderCalendar() {
         const grid = document.getElementById('calendar-grid');
@@ -234,19 +175,20 @@
             dayDiv.innerHTML = `<strong>${d}</strong>`;
 
             Object.values(cloudData).forEach(t => {
-                const start = t.date ? new Date(t.date) : null;
-                const end = t.date_end ? new Date(t.date_end) : (start || null);
+                const start = t.startDate ? new Date(t.startDate) : null;
+                const end = t.endDate ? new Date(t.endDate) : start;
                 
                 if (start && end && dateObj >= start && dateObj <= end && t.text) {
                     const bar = document.createElement('div');
-                    const isMulti = t.date && t.date_end && t.date !== t.date_end;
-                    bar.className = `event-bar ${isMulti ? 'event-multi' : 'event-task'}`;
+                    const isRange = t.startDate && t.endDate && t.startDate !== t.endDate;
+                    bar.className = `event-bar ${isRange ? 'event-multi' : 'event-task'}`;
                     if(t.checked) bar.style.opacity = "0.3";
-                    // 시작일이거나 단일 일정인 경우에만 텍스트 표시
-                    if (dateObj.getTime() === start.getTime() || !isMulti) {
+                    
+                    // 기간제 일정의 경우 시작일에만 이름을 표시
+                    if (dateObj.getTime() === start.getTime() || !isRange) {
                         bar.innerText = '📝 ' + t.text;
                     } else {
-                        bar.innerHTML = '&nbsp;'; // 기간 바 채우기
+                        bar.innerHTML = '&nbsp;';
                     }
                     dayDiv.appendChild(bar);
                 }
@@ -265,13 +207,14 @@
                 if(t.checked) completed++; 
                 else { 
                     remain++; 
-                    if(t.date === todayStr || t.date_end === todayStr) today++; 
+                    if(t.endDate === todayStr || t.startDate === todayStr) today++; 
                 }
             } 
         });
         const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
         document.getElementById('progress-text').innerText = percent + '%';
-        document.getElementById('progress-bar').style.width = percent + '%';
+        // 이행률 박스 내부의 배경 바 길이를 조정
+        document.getElementById('progress-fill-bg').style.width = percent + '%';
         document.getElementById('today-count').innerText = today;
         document.getElementById('remaining-count').innerText = remain;
     }
