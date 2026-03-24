@@ -1,92 +1,60 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3407/3407024.png">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>대학교 과제 및 일정 스마트 관리</title>
-    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    
     <style>
-        :root { --main-color: #3498db; --bg-color: #f8f9fa; --border-color: #e1e8ed; --task-color: #3498db; --long-color: #f39c12; --success-color: #2ecc71; --danger-color: #e74c3c; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: #2c3e50; padding-bottom: 150px; }
+        :root { --main-color: #3498db; --bg-color: #f8f9fa; --border-color: #e1e8ed; --success-color: #2ecc71; --danger-color: #e74c3c; --long-color: #f39c12; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: #2c3e50; padding-bottom: 100px; }
         .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
         
-        .sync-status { text-align: center; font-size: 0.8em; color: #95a5a6; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .sync-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; animation: blink 1.5s infinite; }
-        @keyframes blink { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
-
+        /* 대시보드 */
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
-        .widget-card { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 12px; text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 85px; }
-        .widget-card h4 { margin: 0 0 5px 0; font-size: 0.9em; color: #7f8c8d; }
+        .widget-card { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 12px; text-align: center; }
         .widget-value { font-size: 1.2em; font-weight: bold; color: var(--main-color); }
 
-        .mini-progress-wrapper { background: #eee; border-radius: 10px; height: 8px; width: 80%; margin: 8px auto 0; overflow: hidden; }
-        .mini-progress-bar { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 0%; transition: width 0.5s ease-in-out; }
-
+        /* 탭 메뉴 */
         .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); }
         .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #7f8c8d; }
         .tab-btn.active { color: var(--main-color); border-bottom: 3px solid var(--main-color); }
         .content-section { display: none; }
         .content-section.active { display: block; }
 
-        .preset-section { background: #fdfefe; border: 1px solid #e1e8ed; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+        /* 프리셋 섹션 (복구된 부분) */
+        .preset-section { 
+            background: #ffffff; border: 2px solid #3498db; padding: 15px; 
+            border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+        }
         .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 15px; }
         .preset-card { background: #f8f9fa; border: 1px solid #ddd; padding: 15px 10px; border-radius: 12px; text-align: center; position: relative; }
-        .preset-name-input { width: 85%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; margin-bottom: 8px; font-size: 0.8em; text-align: center; font-weight: bold; }
-        .btn-preset-save { background: var(--success-color); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75em; }
-        .btn-preset-load { background: #6c5ce7; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75em; }
-        
-        .btn-preset-del { 
-            position: absolute; top: -8px; right: -8px; 
-            background: var(--danger-color); color: white; border: 2px solid white; 
-            width: 24px; height: 24px; border-radius: 50%; 
-            cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s ease; z-index: 10;
-        }
-        .btn-preset-del:hover { background: #c0392b; transform: scale(1.15); }
+        .preset-name-input { width: 80%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; margin-bottom: 8px; text-align: center; font-size: 0.85em; }
+        .btn-preset-del { position: absolute; top: -8px; right: -8px; background: var(--danger-color); color: white; border: 2px solid white; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; }
 
+        /* 과제 카드 */
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .subject-card { border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; background: #fff; position: relative; }
-        .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .subject-title { border: none; font-weight: bold; color: #1a508b; font-size: 1.1em; width: 70%; outline: none; }
+        .subject-card { border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; background: #fff; }
+        .task-row { margin-bottom: 10px; padding: 8px; background: #fafafa; border-radius: 8px; border-left: 3px solid var(--main-color); }
         
-        .task-row { margin-bottom: 15px; background: #fafafa; padding: 10px; border-radius: 8px; border-left: 3px solid var(--main-color); }
-        .task-desc { width: 100%; border: none; background: transparent; font-size: 0.8em; color: #666; margin-top: 5px; outline: none; border-top: 1px dashed #eee; padding-top: 5px; }
-        
+        /* 달력 */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #eee; border-left: 1px solid #eee; }
         .calendar-day { min-height: 90px; padding: 5px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.8em; }
-        .event-bar { font-size: 0.7em; padding: 2px 4px; margin-bottom: 2px; border-radius: 3px; color: white; cursor: pointer; overflow: hidden; white-space: nowrap; }
-
-        .reset-wrapper { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-        .reset-btn { padding: 10px 18px; border: none; border-radius: 25px; color: white; cursor: pointer; font-weight: bold; font-size: 0.8em; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; }
-        .add-task-btn { width: 100%; padding: 10px; border: 1px dashed var(--main-color); background: #f0f7ff; color: var(--main-color); border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .event-bar { font-size: 0.75em; padding: 3px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .event-task { background-color: var(--main-color); }
+        .event-long { background-color: var(--long-color); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="sync-status"><div class="sync-dot"></div> 실시간 클라우드 동기화 중</div>
-    
-    <header style="text-align: center; margin-bottom: 15px;">
-        <h1 style="font-size: 1.4em; color: #2c3e50; margin: 0;">학기 일정 통합 매니저</h1>
+    <header style="text-align: center; margin-bottom: 20px;">
+        <h1 style="font-size: 1.4em; color: #2c3e50;">학기 일정 통합 매니저</h1>
     </header>
 
     <div class="dashboard">
-        <div class="widget-card">
-            <h4>이행률</h4>
-            <div class="widget-value" id="progress-text">0%</div>
-            <div class="mini-progress-wrapper">
-                <div class="mini-progress-bar" id="mini-bar"></div>
-            </div>
-        </div>
+        <div class="widget-card"><h4>이행률</h4><div class="widget-value" id="progress-text">0%</div></div>
         <div class="widget-card"><h4>오늘 마감</h4><div class="widget-value" id="today-count" style="color:var(--danger-color)">0</div></div>
         <div class="widget-card"><h4>남은 과제</h4><div class="widget-value" id="remaining-count">0</div></div>
     </div>
@@ -97,64 +65,36 @@
     </div>
 
     <div id="list-section" class="content-section active">
-        <div class="preset-section" style="background: #ffffff; border: 2px solid #3498db; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15); padding: 15px;">
-            <div style="display: flex; flex-direction: column; gap: 15px;">
-                
-                <div style="display: flex; align-items: center; justify-content: space-between; background: #f0f7ff; padding: 10px; border-radius: 10px; border: 1px solid #d0e3ff;">
-                    <strong style="font-size: 0.9em; color: #2980b9; white-space: nowrap;">✨ 과목 프리셋</strong>
-                    <button onclick="addPresetSlot()" style="background: #6c5ce7; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: bold; box-shadow: 0 2px 6px rgba(108, 92, 231, 0.3); white-space: nowrap;">
-                        + 슬롯 추가
-                    </button>
-                </div>
-
-                <div style="display: flex; gap: 5px; background: #fff; padding: 5px; border-radius: 10px; border: 2px solid #3498db;">
-                    <input type="text" id="direct-sub-input" placeholder="새 과목 명 입력" style="flex: 1; min-width: 0; padding: 10px; border: none; font-size: 0.9em; outline: none; background: transparent;">
-                    <button onclick="addSubjectDirect()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 7px; cursor: pointer; font-weight: bold; font-size: 0.9em; white-space: nowrap;">
-                        추가
-                    </button>
-                </div>
-
+        <div class="preset-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #2980b9;">✨ 과목 프리셋 설정</strong>
+                <button onclick="addPresetSlot()" style="background: #6c5ce7; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">+ 슬롯 추가</button>
             </div>
-            <div class="preset-grid" id="preset-container" style="margin-top: 15px;"></div>
+            
+            <div style="margin-top:15px; display:flex; gap:5px;">
+                <input type="text" id="direct-sub-input" placeholder="새 과목 명 바로 추가" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px; outline:none;">
+                <button onclick="addSubjectDirect()" style="background:var(--main-color); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">과목 추가</button>
+            </div>
+
+            <div class="preset-grid" id="preset-container">
+                </div>
         </div>
-        
+
         <div class="grid-layout" id="subject-container"></div>
     </div>
 
     <div id="cal-section" class="content-section">
-        <div style="background:#fff8ee; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #fce4bd;">
-            <strong style="font-size: 0.9em; color: #d35400;">🚩 기간 일정(시험/공강 등) 등록</strong>
-            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-                <input type="text" id="long-title" placeholder="일정 내용" style="flex:1; min-width:120px; padding:6px; border:1px solid #ddd; border-radius:5px;">
-                <input type="date" id="long-start" style="padding:5px; border:1px solid #ddd; border-radius:5px;">
-                <span style="align-self:center;">~</span>
-                <input type="date" id="long-end" style="padding:5px; border:1px solid #ddd; border-radius:5px;">
-                <button onclick="addLongEvent()" style="background:var(--long-color); color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">등록</button>
-            </div>
-        </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <button onclick="changeMonth(-1)" style="border:none; background:none; font-size:1.2em; cursor:pointer;">◀</button>
+            <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer; font-size:1.2em;">◀</button>
             <h2 id="current-month-display" style="margin:0; font-size: 1.1em;"></h2>
-            <button onclick="changeMonth(1)" style="border:none; background:none; font-size:1.2em; cursor:pointer;">▶</button>
+            <button onclick="changeMonth(1)" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
         </div>
         <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 </div>
 
-<div class="reset-wrapper">
-    <button class="reset-btn" style="background-color: #34495e;" onclick="resetListOnly()">📋 리스트 초기화</button>
-    <button class="reset-btn" style="background-color: #7f8c8d;" onclick="resetCalendarOnly()">📅 달력 일정 초기화</button>
-</div>
-
 <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log("Service Worker Registered", reg))
-                .catch(err => console.log("Service Worker Failed", err));
-        });
-    }
-
+    // Firebase 설정
     const firebaseConfig = {
         apiKey: "AIzaSyBFgo6A1AzR1XOF_xBPDcsAqbD-Otg8-vk",
         authDomain: "collage-scheduler.firebaseapp.com",
@@ -164,21 +104,22 @@
         messagingSenderId: "453104339634",
         appId: "1:453104339634:web:61fa883b7aad617d6917ab"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let cloudData = {}, subjectList = {}, presets = {}, longEvents = {}, currentDate = new Date();
 
+    // 데이터 실시간 동기화 및 렌더링
     db.ref().on("value", (snapshot) => {
         const data = snapshot.val() || {};
         cloudData = data.assignments || {};
         subjectList = data.subjectList || {};
+        presets = data.presets || {};
         longEvents = data.longEvents || {};
-        presets = data.presets || {}; 
-        renderPresetUI();
-        renderSubjects();
-        updateWidgets();
+
+        renderPresetUI(); // 프리셋 화면 그리기
+        renderSubjects(); // 과제 카드 그리기
+        updateWidgets();  // 상단 통계 업데이트
         if(document.getElementById('cal-section').classList.contains('active')) renderCalendar();
     });
 
@@ -189,79 +130,96 @@
         if(type === 'cal') renderCalendar();
     }
 
-    function addPresetSlot() {
-        const pid = 'p' + Date.now();
-        db.ref('presets/' + pid).set({ name: "새 프리셋", subjects: [] });
-    }
-
-    function deletePresetSlot(pid) {
-        if(confirm("이 프리셋 슬롯을 삭제할까요?")) {
-            db.ref('presets/' + pid).remove();
-        }
-    }
-
+    // --- 프리셋 로직 ---
     function renderPresetUI() {
         const container = document.getElementById('preset-container');
+        if(!container) return;
         container.innerHTML = '';
         Object.entries(presets).forEach(([pid, pData]) => {
             const card = document.createElement('div');
             card.className = 'preset-card';
             card.innerHTML = `
-                <button class="btn-preset-del" onclick="deletePresetSlot('${pid}')" title="삭제">✕</button>
-                <input type="text" class="preset-name-input" id="name-${pid}" value="${pData.name}" onchange="db.ref('presets/${pid}/name').set(this.value)">
-                <div style="display:flex; justify-content:center; gap:3px;">
-                    <button class="btn-preset-save" onclick="saveToPreset('${pid}')">저장</button>
-                    <button class="btn-preset-load" onclick="loadFromPreset('${pid}')">불러오기</button>
+                <button class="btn-preset-del" onclick="deletePresetSlot('${pid}')">✕</button>
+                <input type="text" class="preset-name-input" value="${pData.name}" onchange="db.ref('presets/${pid}/name').set(this.value)">
+                <div style="display:flex; justify-content:center; gap:4px;">
+                    <button onclick="saveToPreset('${pid}')" style="background:var(--success-color); color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">저장</button>
+                    <button onclick="loadFromPreset('${pid}')" style="background:#6c5ce7; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">불러오기</button>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
+    function addPresetSlot() {
+        const pid = 'p' + Date.now();
+        db.ref('presets/' + pid).set({ name: "새 프리셋", subjects: [] });
+    }
+
+    function deletePresetSlot(pid) {
+        if(confirm("이 프리셋 슬롯을 삭제할까요?")) db.ref('presets/' + pid).remove();
+    }
+
     function saveToPreset(pid) {
-        const currentNames = Object.values(subjectList);
-        if(currentNames.length === 0) return;
-        if(confirm(`'${presets[pid].name}'에 저장할까요?`)) db.ref(`presets/${pid}/subjects`).set(currentNames);
+        const names = Object.values(subjectList);
+        if(names.length === 0) { alert("저장할 과목이 없습니다."); return; }
+        if(confirm(`현재 리스트를 '${presets[pid].name}'에 저장할까요?`)) {
+            db.ref(`presets/${pid}/subjects`).set(names);
+        }
     }
 
     function loadFromPreset(pid) {
         const pData = presets[pid];
-        if(!pData.subjects) { alert("데이터가 없습니다."); return; }
-        if(confirm(`'${pData.name}'을 불러올까요? 현재 리스트는 교체됩니다.`)) {
-            db.ref("subjectList").remove(); db.ref("assignments").remove();
-            pData.subjects.forEach((name, idx) => db.ref("subjectList/sub" + (Date.now() + idx)).set(name));
+        if(!pData.subjects) { alert("저장된 데이터가 없습니다."); return; }
+        if(confirm(`'${pData.name}' 프리셋을 불러올까요? 현재 리스트는 모두 삭제됩니다.`)) {
+            db.ref("subjectList").remove(); 
+            db.ref("assignments").remove();
+            pData.subjects.forEach((name, idx) => {
+                db.ref("subjectList/sub" + (Date.now() + idx)).set(name);
+            });
         }
     }
 
+    // --- 과제 및 달력 로직 (연동 확인 완료) ---
     function renderSubjects() {
         const container = document.getElementById('subject-container');
         container.innerHTML = '';
         Object.entries(subjectList).forEach(([subId, subName]) => {
             const card = document.createElement('div');
             card.className = 'subject-card';
-            card.innerHTML = `<div class="subject-header"><input type="text" class="subject-title" value="${subName}" onchange="db.ref('subjectList/${subId}').set(this.value)"><button style="border:none; background:none; color:#ccc; cursor:pointer;" onclick="if(confirm('과목 삭제?')) db.ref('subjectList/${subId}').remove()">✕</button></div><div id="list-sub-${subId}"></div>`;
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                    <input type="text" value="${subName}" style="border:none; font-weight:bold; font-size:1.1em; outline:none;" onchange="db.ref('subjectList/${subId}').set(this.value)">
+                    <button onclick="if(confirm('과목 삭제?')) db.ref('subjectList/${subId}').remove()" style="border:none; background:none; color:#ccc; cursor:pointer;">✕</button>
+                </div>
+                <div id="tasks-${subId}"></div>
+                <button onclick="addTask('${subId}')" style="width:100%; padding:10px; border:1px dashed #3498db; background:#f0f7ff; color:#3498db; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:10px;">+ 과제 추가</button>
+            `;
             container.appendChild(card);
-            
+
             const taskIds = Object.keys(cloudData).filter(id => id.startsWith(subId)).sort();
             taskIds.forEach(id => {
-                const t = cloudData[id], row = document.createElement('div');
+                const t = cloudData[id];
+                const row = document.createElement('div');
                 row.className = 'task-row';
                 row.innerHTML = `
-                    <div class="input-group" style="display:flex; align-items:center; gap:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
                         <input type="checkbox" ${t.checked ? 'checked' : ''} onchange="db.ref('assignments/${id}/checked').set(this.checked)">
-                        <input type="text" class="task-input" value="${t.text}" style="flex:1; border:none; outline:none; font-weight:bold; background:transparent;" placeholder="과제 제목" onchange="db.ref('assignments/${id}/text').set(this.value)">
-                        <button style="border:none; background:none; color:var(--danger-color); cursor:pointer;" onclick="db.ref('assignments/${id}').remove()">✕</button>
+                        <input type="text" value="${t.text}" style="flex:1; border:none; outline:none; font-weight:bold; background:transparent;" onchange="db.ref('assignments/${id}/text').set(this.value)">
                     </div>
-                    <input type="text" class="task-desc" value="${t.desc || ''}" placeholder="상세 정보(링크, 메모 등)" onchange="db.ref('assignments/${id}/desc').set(this.value)">
-                    <input type="date" value="${t.date}" style="width:100%; border:none; font-size:0.8em; color:#888; margin-top:5px; background:transparent;" onchange="db.ref('assignments/${id}/date').set(this.value)">
+                    <input type="date" value="${t.date || ''}" style="width:100%; border:none; font-size:0.8em; color:#888; margin-top:5px; background:transparent;" onchange="db.ref('assignments/${id}/date').set(this.value)">
                 `;
-                document.getElementById(`list-sub-${subId}`).appendChild(row);
+                document.getElementById(`tasks-${subId}`).appendChild(row);
             });
-            const addBtn = document.createElement('button');
-            addBtn.className = 'add-task-btn'; addBtn.innerText = '+ 과제 추가';
-            addBtn.onclick = () => db.ref("assignments/"+subId+'t'+Date.now()).set({text:"", date:"", checked:false, desc:""});
-            card.appendChild(addBtn);
         });
+    }
+
+    function addTask(subId) { db.ref("assignments/" + subId + 't' + Date.now()).set({text: "새 과제", date: "", checked: false}); }
+
+    function addSubjectDirect() {
+        const input = document.getElementById('direct-sub-input');
+        if(!input.value) return;
+        db.ref("subjectList/sub" + Date.now()).set(input.value);
+        input.value = '';
     }
 
     function renderCalendar() {
@@ -277,15 +235,7 @@
             dayDiv.className = 'calendar-day';
             const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             dayDiv.innerHTML = `<strong>${d}</strong>`;
-            Object.entries(longEvents).forEach(([id, ev]) => {
-                if (dateStr >= ev.start && dateStr <= ev.end) {
-                    const bar = document.createElement('div');
-                    bar.className = 'event-bar event-long';
-                    bar.innerText = '🚩 ' + ev.text;
-                    bar.onclick = () => { if(confirm('일정 삭제?')) db.ref('longEvents/'+id).remove(); };
-                    dayDiv.appendChild(bar);
-                }
-            });
+
             Object.values(cloudData).forEach(t => {
                 if (t.date === dateStr && t.text) {
                     const bar = document.createElement('div');
@@ -299,28 +249,19 @@
         }
     }
 
-    function changeMonth(val) { currentDate.setMonth(currentDate.getMonth() + val); renderCalendar(); }
-    function addLongEvent() {
-        const text = document.getElementById('long-title').value, start = document.getElementById('long-start').value, end = document.getElementById('long-end').value;
-        if(!text || !start || !end) return;
-        db.ref('longEvents/ev' + Date.now()).set({ text, start, end });
-        document.getElementById('long-title').value = '';
-    }
-    function addSubjectDirect() {
-        const name = document.getElementById('direct-sub-input').value;
-        if(!name) return;
-        db.ref("subjectList/sub" + Date.now()).set(name);
-        document.getElementById('direct-sub-input').value = '';
-    }
-    function resetListOnly() { if(confirm("리스트를 초기화할까요?")) { db.ref("subjectList").remove(); db.ref("assignments").remove(); } }
-    function resetCalendarOnly() { if(confirm("달력 일정을 초기화할까요?")) db.ref("longEvents").remove(); }
+    function changeMonth(v) { currentDate.setMonth(currentDate.getMonth() + v); renderCalendar(); }
 
     function updateWidgets() {
         let total = 0, completed = 0, today = 0, remain = 0, todayStr = new Date().toISOString().split('T')[0];
-        Object.values(cloudData).forEach(t => { if(t.text) { total++; if(t.checked) completed++; else { remain++; if(t.date === todayStr) today++; } } });
-        const percent = (total === 0 ? 0 : Math.round((completed/total)*100));
+        Object.values(cloudData).forEach(t => { 
+            if(t.text) { 
+                total++; 
+                if(t.checked) completed++; 
+                else { remain++; if(t.date === todayStr) today++; }
+            } 
+        });
+        const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
         document.getElementById('progress-text').innerText = percent + '%';
-        document.getElementById('mini-bar').style.width = percent + '%';
         document.getElementById('today-count').innerText = today;
         document.getElementById('remaining-count').innerText = remain;
     }
