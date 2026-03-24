@@ -8,8 +8,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         :root { --main-color: #3498db; --bg-color: #f8f9fa; --border-color: #e1e8ed; --success-color: #2ecc71; --danger-color: #e74c3c; --long-color: #9b59b6; --personal-color: #f39c12; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: #2c3e50; padding-bottom: 100px; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: #2c3e50; padding-bottom: 50px; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); min-height: 80vh; }
         
         /* 대시보드 */
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; }
@@ -18,28 +18,33 @@
         .mini-progress-wrapper { background: #eee; height: 6px; border-radius: 3px; margin: 8px auto 0; width: 80%; overflow: hidden; }
         .mini-progress-fill { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 0%; transition: width 0.5s ease; }
 
-        /* 탭 및 프리셋 */
-        .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #7f8c8d; }
+        /* 탭 메뉴 - 상단 고정 느낌 */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); }
+        .tab-btn { flex: 1; padding: 15px; border: none; background: none; cursor: pointer; font-weight: bold; color: #7f8c8d; font-size: 1em; transition: 0.3s; }
         .tab-btn.active { color: var(--main-color); border-bottom: 3px solid var(--main-color); }
-        .preset-section { background: #fdfdfd; border: 1px dashed var(--main-color); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
-        .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
-        .preset-card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 10px; text-align: center; position: relative; }
 
-        /* 과제 리스트 */
+        /* 섹션 제어: active가 없으면 완전히 숨김 */
+        .content-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 프리셋 및 리스트 */
+        .preset-section { background: #fdfdfd; border: 1px dashed var(--main-color); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+        .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 10px; }
+        .preset-card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 10px; text-align: center; position: relative; }
         .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .subject-card { border: 1px solid var(--border-color); padding: 20px; border-radius: 15px; background: #fff; }
         .task-row { margin-bottom: 10px; padding: 10px; background: #fafafa; border-radius: 8px; border-left: 4px solid var(--main-color); }
         .task-row.urgent { border-left-color: var(--danger-color); background: #fff5f5; }
         .d-day-badge { font-size: 0.65em; font-weight: bold; padding: 2px 5px; border-radius: 4px; min-width: 40px; text-align: center; display: inline-block; }
 
-        /* 달력 */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #eee; border-left: 1px solid #eee; }
-        .calendar-day { min-height: 100px; padding: 5px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.8em; cursor: pointer; }
-        .event-bar { font-size: 0.75em; padding: 3px 5px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; white-space: nowrap; position: relative; }
+        /* 달력 스타일 */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #eee; border-left: 1px solid #eee; background: #fff; }
+        .calendar-day { min-height: 110px; padding: 5px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 0.8em; cursor: pointer; }
+        .calendar-day:hover { background-color: #fcfcfc; }
+        .event-bar { font-size: 0.75em; padding: 3px 5px; margin-bottom: 2px; border-radius: 3px; color: white; overflow: hidden; white-space: nowrap; }
         .event-task { background-color: var(--main-color); }
-        .event-personal { background-color: var(--personal-color); cursor: pointer; }
-        .event-personal:hover { filter: brightness(1.1); }
+        .event-personal { background-color: var(--personal-color); }
     </style>
 </head>
 <body>
@@ -80,16 +85,17 @@
     </div>
 
     <div id="cal-section" class="content-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer; font-size:1.2em;">◀</button>
-            <h2 id="current-month-display" style="margin:0; font-size: 1.1em;"></h2>
-            <button onclick="changeMonth(1)" style="border:none; background:none; cursor:pointer; font-size:1.2em;">▶</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 10px;">
+            <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer; font-size:1.5em; color: var(--main-color);">◀</button>
+            <h2 id="current-month-display" style="margin:0; font-size: 1.2em; letter-spacing: 1px;"></h2>
+            <button onclick="changeMonth(1)" style="border:none; background:none; cursor:pointer; font-size:1.5em; color: var(--main-color);">▶</button>
         </div>
         <div class="calendar-grid" id="calendar-grid"></div>
     </div>
 </div>
 
 <script>
+    // Firebase 설정
     const firebaseConfig = {
         apiKey: "AIzaSyBFgo6A1AzR1XOF_xBPDcsAqbD-Otg8-vk",
         authDomain: "collage-scheduler.firebaseapp.com",
@@ -104,6 +110,7 @@
 
     let cloudData = {}, subjectList = {}, presets = {}, currentDate = new Date();
 
+    // 데이터 리스너
     db.ref().on("value", (snapshot) => {
         const data = snapshot.val() || {};
         cloudData = data.assignments || {};
@@ -115,14 +122,22 @@
         if(document.getElementById('cal-section').classList.contains('active')) renderCalendar();
     });
 
+    // 탭 전환 기능 (핵심 수정 부분)
     function showTab(type) {
-        document.querySelectorAll('.content-section, .tab-btn').forEach(el => el.classList.remove('active'));
+        // 모든 섹션 숨기기 및 버튼 비활성화
+        document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // 선택한 섹션만 보이기
         document.getElementById(type + '-section').classList.add('active');
         document.getElementById('tab-' + type).classList.add('active');
+        
+        // 달력 탭일 경우 달력 새로고침
         if(type === 'cal') renderCalendar();
     }
 
-    /* 프리셋 UI (요청대로 유지) */
+    // --- 이하 로직 동일 (프리셋, 리스트, 달력 렌더링) ---
+
     function renderPresetUI() {
         const container = document.getElementById('preset-container');
         container.innerHTML = '';
@@ -137,6 +152,7 @@
             container.appendChild(card);
         });
     }
+
     function addPresetSlot() { db.ref('presets/p' + Date.now()).set({ name: "새 프리셋", subjects: [] }); }
     function saveToPreset(pid) { db.ref(`presets/${pid}/subjects`).set(Object.values(subjectList)); alert("현재 과목 구성이 저장되었습니다."); }
     function loadFromPreset(pid) {
@@ -163,7 +179,6 @@
                 const dDay = getDDay(t.date_end || t.date);
                 const isUrgent = dDay !== null && dDay <= 5 && !t.checked;
                 
-                // [변경] 마감일 텍스트 생성
                 let dDayBadge = "";
                 if (dDay !== null && !t.checked) {
                     let color = "#95a5a6", text = `D-${dDay}`;
@@ -229,13 +244,11 @@
                         const isPersonal = t.type === 'personal';
                         bar.className = `event-bar ${isPersonal ? 'event-personal' : 'event-task'}`;
                         if(t.checked) bar.style.opacity = "0.3";
-                        
                         bar.innerText = (isPersonal ? '📌 ' : '📝 ') + t.text;
 
-                        // [추가] 개인 일정 클릭 시 삭제 기능
                         if(isPersonal) {
                             bar.onclick = (e) => {
-                                e.stopPropagation(); // 부모 클릭(일정 추가) 방지
+                                e.stopPropagation();
                                 if(confirm(`'${t.text}' 일정을 삭제할까요?`)) db.ref(`assignments/${id}`).remove();
                             };
                         }
